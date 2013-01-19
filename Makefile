@@ -1,12 +1,12 @@
 CFLAGS=-std=c99 -Wall -g3 -I/opt/local/include
-CC=gcc
+CC=clang
 LDFLAGS=-L/opt/local/lib -lgcrypt
 
 default: all
 
 all: test
 
-%.o: %.c
+%.o: %.c 
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 test: test.o crypt.o
