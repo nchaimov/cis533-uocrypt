@@ -186,6 +186,7 @@ unsigned char * uocrypt_decrypt(struct uocrypt_enc_msg * msg, struct uocrypt_key
 	return out;
 }
 
+// Calculate the HMAC of a message
 unsigned char * uocrypt_hmac(unsigned char * in, size_t inlen, struct uocrypt_key * key) {
 	if(in == NULL) {
 		fprintf(stderr, "Error: uocrypt_hmac 'in' was NULL.\n");
@@ -230,10 +231,12 @@ unsigned char * uocrypt_hmac(unsigned char * in, size_t inlen, struct uocrypt_ke
 	return out;
 }
 
+// Return the digest size for the HMAC
 size_t uocrypt_hmac_len(void) {
 	return gcry_md_get_algo_dlen(UOCRYPT_HMAC_HASH);
 }
 
+// Debugging function: print contents of a key
 void print_key(struct uocrypt_key * key) {
 	if(key == NULL) {
 		printf("Null key\n");
@@ -250,6 +253,7 @@ void print_key(struct uocrypt_key * key) {
 	}
 }
 
+// Debugging function: print contents of a message
 void print_msg(struct uocrypt_enc_msg * msg) {
 	if(msg == NULL) {
 		printf("Null message.\n");

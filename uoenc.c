@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <termios.h>
+#include <limits.h>
 #include "crypt.h"
 #include "uoutil.h"
 
@@ -77,13 +78,7 @@ int main(int argc, char * argv[]) {
 	}
 	
 	// Determine output filename
-	char extension[] = EXTENSION;
-	size_t infile_name_len = strnlen(filename, 
-		MAX_FILENAME_LEN - sizeof(extension));
-	size_t outfile_name_len = infile_name_len + sizeof(extension);
-	char * outfile_name = malloc(outfile_name_len);
-	snprintf(outfile_name, outfile_name_len, "%*s%s", (int) infile_name_len,
-		filename, extension);
+	char * outfile_name = uoenc_outfile_name(filename);
 	
 	
 	// Check if output file already exists
@@ -114,7 +109,7 @@ int main(int argc, char * argv[]) {
 	uocrypt_initialize_libgcrypt();
 	char * password = getpass("Password: ");
 	struct uocrypt_key * key = uocrypt_make_key(password, 
-		strlen(password), NULL, 0);
+		strnlen(password, PASS_MAX), NULL, 0);
 	struct uocrypt_enc_msg * msg = uocrypt_encrypt((unsigned char *)input_buf,
 		infile_stat.st_size, key);
 	
@@ -142,6 +137,8 @@ int main(int argc, char * argv[]) {
 		// Write encrypted text
 		fwrite(msg->txt, 1, header->txt_len, outf);
 		fclose(outf);
+	} else {
+		// TODO Handle networking
 	}
 	
 	

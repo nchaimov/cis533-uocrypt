@@ -3,7 +3,6 @@
 
 #include "crypt.h"
 
-#define MAX_FILENAME_LEN 255
 #define EXTENSION ".uo"
 #define IDENTIFIER "UOEN"
 
@@ -15,9 +14,10 @@ struct uoenc_file_header {
 	unsigned char iv[UOCRYPT_BLOCK_LEN];
 	size_t hmac_len;
 	size_t txt_len;
-};
+} __attribute__ ((__packed__));
 
 void uoenc_err(const char * err);
+char * uoenc_outfile_name(char * infile_name);
 struct uoenc_file_header * uoenc_make_header(void);
 
 #endif
