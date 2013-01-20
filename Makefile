@@ -1,4 +1,4 @@
-CFLAGS=-std=c99 -Wall -Wextra -pedantic -g3 -I/opt/local/include
+CFLAGS=-std=gnu99 -Wall -Wextra -pedantic -g3 -I/opt/local/include 
 CC=clang
 LDFLAGS=-L/opt/local/lib -lgcrypt
 
