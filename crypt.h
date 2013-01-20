@@ -9,6 +9,7 @@
 #define UOCRYPT_CIPHER GCRY_CIPHER_AES256
 #define UOCRYPT_BLOCK_LEN 16
 #define UOCRYPT_MODE GCRY_CIPHER_MODE_CFB
+#define UOCRYPT_HMAC_HASH GCRY_MD_SHA512
 
 
 #include <stdbool.h>
@@ -35,6 +36,8 @@ struct uocrypt_key * uocrypt_make_key(void * password,
 struct uocrypt_enc_msg * uocrypt_encrypt(unsigned char * in, size_t inlen, 
 	struct uocrypt_key * key);
 unsigned char * uocrypt_decrypt(struct uocrypt_enc_msg * msg, 
+	struct uocrypt_key * key);
+unsigned char * uocrypt_hmac(unsigned char * in, size_t inlen, 
 	struct uocrypt_key * key);
 
 

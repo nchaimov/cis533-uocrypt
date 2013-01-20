@@ -108,10 +108,10 @@ int main(int argc, char * argv[]) {
 	const char * input = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	printf("Encrypting %s\n", input);
 	size_t inlen = strlen(input);
-	unsigned char * inbuf = malloc(inlen * sizeof(unsigned char));
-	memcpy(inbuf, input, inlen * sizeof(unsigned char));
+	unsigned char * inbuf = malloc(inlen);
+	memcpy(inbuf, input, inlen);
 	struct uocrypt_enc_msg * msg = 
-		uocrypt_encrypt(inbuf, inlen * sizeof(unsigned char), key);
+		uocrypt_encrypt(inbuf, inlen, key);
 	printf("Input:\t");
 	for(size_t i = 0; i < inlen; ++i) {
 		printf("%02X", inbuf[i]);
@@ -135,6 +135,31 @@ int main(int argc, char * argv[]) {
 		printf("FAIL: encryption input and output differ\n");
 	}
 	
+	// Calculate the HMAC of the message
+	unsigned char * hmac = uocrypt_hmac(msg->txt, msg->txtlen, key);
+	size_t hmaclen = gcry_md_get_algo_dlen(GCRY_MD_SHA512);
+	printf("HMAC:\t");
+	for(size_t i = 0; i < hmaclen; ++i) {
+		printf("%02X", hmac[i]);
+	}
+	printf("\n");
+	
+	// Calculate the HMAC again. Should be the same.
+	unsigned char * hmac2 = uocrypt_hmac(msg->txt, msg->txtlen, key);
+	printf("HMAC:\t");
+	for(size_t i = 0; i < hmaclen; ++i) {
+		printf("%02X", hmac2[i]);
+	}
+	printf("\n");
+	int hmac_cmp = memcmp(hmac, hmac2, hmaclen);
+	if(hmac_cmp == 0) {
+		printf("SUCCESS: HMAC outputs match\n");
+	} else {
+		printf("FAIL: HMAC outputs differ\n");
+	}
+	
+	free(hmac);
+	free(hmac2);
 	free(decrypted);
 	free(inbuf);
 	free(msg);
