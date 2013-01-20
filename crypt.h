@@ -11,7 +11,6 @@
 #define UOCRYPT_MODE GCRY_CIPHER_MODE_CFB
 #define UOCRYPT_HMAC_HASH GCRY_MD_SHA512
 
-
 #include <stdbool.h>
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <gcrypt.h>
@@ -29,17 +28,28 @@ struct uocrypt_enc_msg {
 };
 
 void uocrypt_error(gcry_error_t err);
+
 void uocrypt_initialize_libgcrypt(void);
+
 void * uocrypt_make_salt(void);
+
 struct uocrypt_key * uocrypt_make_key(void * password, 
 	size_t passlen, void * salt, size_t saltlen);
+
 struct uocrypt_enc_msg * uocrypt_encrypt(unsigned char * in, size_t inlen, 
 	struct uocrypt_key * key);
+
 unsigned char * uocrypt_decrypt(struct uocrypt_enc_msg * msg, 
 	struct uocrypt_key * key);
+
 unsigned char * uocrypt_hmac(unsigned char * in, size_t inlen, 
 	struct uocrypt_key * key);
 
+size_t uocrypt_hmac_len(void);
+
+void print_key(struct uocrypt_key * key);
+
+void print_msg(struct uocrypt_enc_msg * msg);
 
 
 #endif

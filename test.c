@@ -3,39 +3,11 @@
 #include <stdlib.h>
 #include "crypt.h"
 
-void print_key(struct uocrypt_key * key) {
-	if(key == NULL) {
-		printf("Null key\n");
-	} else {
-		printf("Salt:\t");
-		for(size_t i = 0; i < UOCRYPT_SALT_LEN; ++i) {
-			printf("%02X", key->salt[i]);
-		}
-		printf("\nKey:\t");
-		for(size_t i = 0; i < UOCRYPT_KEY_LEN; ++i) {
-			printf("%02X", key->key[i]);
-		}
-		printf("\n");
-	}
-}
-
-void print_msg(struct uocrypt_enc_msg * msg) {
-	if(msg == NULL) {
-		printf("Null message.\n");
-	} else {
-		printf("IV:\t");
-		for(size_t i = 0; i < UOCRYPT_BLOCK_LEN; ++i) {
-			printf("%02X", msg->iv[i]);
-		}
-		printf("\nText:\t");
-		for(size_t i = 0; i < msg->txtlen; ++i) {
-			printf("%02X", msg->txt[i]);
-		}
-		printf("\n");
-	}
-}
 
 int main(int argc, char * argv[]) {
+	// Silence unused parameter warning
+	(void)argc;
+	(void)argv;
 	
 	// Initialize the library
     printf("initializing gcrypt\n");
@@ -162,6 +134,7 @@ int main(int argc, char * argv[]) {
 	free(hmac2);
 	free(decrypted);
 	free(inbuf);
+	free(msg->txt);
 	free(msg);
 	
 	free(key);
