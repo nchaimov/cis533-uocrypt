@@ -104,7 +104,7 @@ int main(int argc, char * argv[]) {
 		}
 		
 		// Determine output filename
-		outfile_name = malloc(outfile_len);
+		outfile_name = malloc(outfile_len+1);
 		memcpy(outfile_name, filename, outfile_len);
 		outfile_name[outfile_len] = '\0';
 				
