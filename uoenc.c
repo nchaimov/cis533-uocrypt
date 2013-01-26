@@ -216,7 +216,7 @@ int main(int argc, char * argv[]) {
 	free(key);
 	free(msg->txt);
 	free(msg);
-	
+	free(outfile_name);
 	
 	munmap(input_buf, infile_stat.st_size);
 	close(infd);
