@@ -26,7 +26,7 @@ struct __attribute__ ((__packed__)) uoenc_network_packet {
 	char body[0]; // Don't know size ahead of time
 };
 
-void uoenc_err(const char * err);
+void uoenc_err(const char * err) __attribute__ ((__noreturn__));
 
 // Network functions
 bool uoenc_parse_packet(struct uoenc_network_packet * in, 

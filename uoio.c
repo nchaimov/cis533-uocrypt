@@ -202,7 +202,7 @@ bool uoenc_send_packet(int socket, struct uoenc_network_packet * packet) {
 	uint32_t total_sent = 0;
 	uint32_t len = ntohl(packet->packet_len);
 	printf("Send packet length: %d\n", len);
-	ssize_t s;
+	ssize_t s = -1;
 	
 	while(total_sent < len) {
 		s = send(socket, buf + total_sent, len - total_sent, 0);
