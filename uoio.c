@@ -235,7 +235,7 @@ struct uoenc_network_packet * uoenc_recv_packet(int socket) {
 	printf("While getting packet length, received %zd bytes\n", s);
 	
 	len = ntohl(len);
-	printf("Receive packet length: %zd\n", len);
+	printf("Receive packet length: %u\n", len);
 	if(len < sizeof(struct uoenc_network_packet)) {
 		uoenc_err("Packet length too short.");
 	}
@@ -254,8 +254,8 @@ struct uoenc_network_packet * uoenc_recv_packet(int socket) {
 		total_recv += s;
 	}
 		
-	printf("Total bytes: %zd.\n", total_recv);
-	printf("Packet length: %zd.\n", packet->packet_len);
+	printf("Total bytes: %u.\n", total_recv);
+	printf("Packet length: %u.\n", packet->packet_len);
 	printf("filename: %s\n", packet->filename);
 	
 	if(s == -1) {

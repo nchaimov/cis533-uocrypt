@@ -1,5 +1,5 @@
 CFLAGS=-std=gnu99 -Wall -Wextra -g3 -I/opt/local/include 
-CC=clang
+CC=gcc
 LDFLAGS=-L/opt/local/lib -lgcrypt
 
 default: all

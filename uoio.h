@@ -4,10 +4,15 @@
 #include "uocrypt.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #define EXTENSION ".uo"
 #define IDENTIFIER "UOEN"
 #define FILENAME_LEN 255
+
+#ifndef PASS_MAX
+#define PASS_MAX 255
+#endif
 
 extern char * progname;
 
