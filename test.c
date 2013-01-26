@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "crypt.h"
+#include "uocrypt.h"
 
 
 int main(int argc, char * argv[]) {

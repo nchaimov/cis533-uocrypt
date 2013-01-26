@@ -1,4 +1,4 @@
-CFLAGS=-std=gnu99 -Wall -Wextra -pedantic -g3 -I/opt/local/include 
+CFLAGS=-std=gnu99 -Wall -Wextra -g3 -I/opt/local/include 
 CC=clang
 LDFLAGS=-L/opt/local/lib -lgcrypt
 
@@ -9,13 +9,13 @@ all: test uoenc uodec
 %.o: %.c 
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-test: test.o crypt.o
+test: test.o uocrypt.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-uoenc: uoenc.o crypt.o uoutil.o
+uoenc: uoenc.o uocrypt.o uoio.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-uodec: uodec.o crypt.o uoutil.o
+uodec: uodec.o uocrypt.o uoio.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean: 

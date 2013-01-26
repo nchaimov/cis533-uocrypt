@@ -12,8 +12,8 @@
 #include <sys/mman.h>
 #include <termios.h>
 #include <limits.h>
-#include "crypt.h"
-#include "uoutil.h"
+#include "uocrypt.h"
+#include "uoio.h"
 
 extern char * progname;
 
@@ -48,9 +48,8 @@ int main(int argc, char * argv[]) {
 		
 	char * outfile_name = NULL;
 	struct uocrypt_enc_msg * msg = malloc(sizeof(struct uocrypt_enc_msg));
-	struct uoenc_file_header * header =
-		malloc(sizeof(struct uoenc_file_header));
-	unsigned char * hmac = NULL;
+	unsigned char * salt = malloc(UOCRYPT_SALT_LEN);
+	unsigned char * hmac = malloc(uocrypt_hmac_len());
 		
 	// Local
 	if(filename != NULL) {
@@ -81,81 +80,56 @@ int main(int argc, char * argv[]) {
 		outfile_name = malloc(outfile_len);
 		memcpy(outfile_name, filename, outfile_len);
 		outfile_name[outfile_len] = '\0';
-		
+				
 		// Open input file
 		FILE * infh = fopen(filename, "rb");
 		if(infh == NULL) {
 			perror(progname);
 			exit(EXIT_FAILURE);
 		}
-		
-		// Read file header 
-		size_t nb = fread(header, sizeof(struct uoenc_file_header), 1, infh);
-		if(nb < 1) {
-			uoenc_err("Unable to read file header");
-		}
-		
-		// Check header identifier
-		char identifier[] = IDENTIFIER;
-		int identcmp = memcmp(header->identifier, identifier,
-			sizeof(identifier) - 1);
-		if(identcmp != 0) {
-			uoenc_err("Invalid file header");
-		}
-		
-		// Read HMAC from file
-		hmac = malloc(header->hmac_len);
-		nb = fread(hmac, 1, header->hmac_len, infh);
-		if(nb != header->hmac_len) {
-			uoenc_err("Invalid HMAC length header field");
-		}
-		
-		// Read encrypted message from file
-		msg->txt = malloc(header->txt_len);
-		nb = fread(msg->txt, 1, header->txt_len, infh);
-		if(nb != header->txt_len) {
-			uoenc_err("Invalid text length header field");
-		}
-		msg->txtlen = header->txt_len;
-		
-		// Set IV
-		memcpy(msg->iv, header->iv, UOCRYPT_BLOCK_LEN);
-		
+				
+		// Read file
+		uoenc_read_uo_file(infh, msg, salt, hmac); 
+				
 		fclose(infh);
 		
+	} else {
+			
 	}
-	
-	// TODO Networking
 	
 	if(outfile_name == NULL) {
 		uoenc_err("Invalid output filename");
 	}
-	
+		
 	// Check if output file already exists.
 	struct stat outfile_stat;
 	int outfile_err = stat(outfile_name, &outfile_stat);
 	if(!outfile_err) {
 		uoenc_err("output file already exists");
 	}
-	
-	// Open output file for writing.
-	FILE * outfh = fopen(outfile_name, "wb");
-	if(outfh == NULL) {
-		perror(progname);
-	}
-	
+		
 	// Read password
 	char * password = getpass("Password: ");
+	if(password == NULL || strnlen(password, PASS_MAX) == 0) {
+		uoenc_err("Password cannot be blank.\n");
+	}
 	
 	// Recreate key using password and salt from input
 	struct uocrypt_key * key = uocrypt_make_key(password, 
-		strlen(password), header->salt, UOCRYPT_SALT_LEN);
+		strlen(password), salt, UOCRYPT_SALT_LEN);
 	
 	// Calculate and verify HMAC
 	unsigned char * hmac_in = uocrypt_hmac(msg->txt, msg->txtlen, key);
 	int hmac_cmp = memcmp(hmac, hmac_in, uocrypt_hmac_len());
 	if(hmac_cmp != 0) {
 		uoenc_err("HMAC verification failed (probably incorrect password)");
+	}
+	
+	// Open output file for writing.
+	FILE * outfh = fopen(outfile_name, "wb");
+	if(outfh == NULL) {
+		perror(progname);
+		exit(EXIT_FAILURE);
 	}
 	
 	// Decrypt input
@@ -169,7 +143,8 @@ int main(int argc, char * argv[]) {
 	
 	
 	free(msg);
-	free(header);
+	free(hmac);
+	free(salt);
 	free(outfile_name);
 	
 	

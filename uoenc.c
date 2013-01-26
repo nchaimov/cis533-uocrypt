@@ -12,8 +12,8 @@
 #include <sys/mman.h>
 #include <termios.h>
 #include <limits.h>
-#include "crypt.h"
-#include "uoutil.h"
+#include "uocrypt.h"
+#include "uoio.h"
 
 extern char * progname;
 
@@ -115,14 +115,7 @@ int main(int argc, char * argv[]) {
 	
 	// Calculate the HMAC
 	unsigned char * hmac = uocrypt_hmac(msg->txt, msg->txtlen, key);
-	
-	// Fill in header
-	struct uoenc_file_header * header = uoenc_make_header();
-	memcpy(header->salt, key->salt, UOCRYPT_SALT_LEN);
-	memcpy(header->iv, msg->iv, UOCRYPT_BLOCK_LEN);
-	header->hmac_len = uocrypt_hmac_len();
-	header->txt_len = infile_stat.st_size;
-	
+		
 	if(local) {
 		// Open output file
 		FILE * outf = fopen(outfile_name, "wb");
@@ -130,19 +123,15 @@ int main(int argc, char * argv[]) {
 			perror(progname);
 			exit(EXIT_FAILURE);
 		}
-		// Write header
-		fwrite(header, 1, sizeof(struct uoenc_file_header), outf);
-		// Write HMAC
-		fwrite(hmac, 1, header->hmac_len, outf);
-		// Write encrypted text
-		fwrite(msg->txt, 1, header->txt_len, outf);
+		bool status = uoenc_write_uo_file(outf, key, msg, hmac);
+		if(!status) {
+			uoenc_err("failed to write output file.");
+		}
 		fclose(outf);
 	} else {
 		// TODO Handle networking
 	}
 	
-	
-	free(header);
 	free(hmac);
 	free(key);
 	free(msg->txt);

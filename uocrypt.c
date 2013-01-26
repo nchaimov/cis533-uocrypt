@@ -1,10 +1,10 @@
-#include "crypt.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <gcrypt.h>
 #pragma GCC diagnostic warning "-Wdeprecated-declarations"
+#include "uocrypt.h"
 
 void uocrypt_error(gcry_error_t err) {
 	fprintf(stderr, "error: %s: %s\n", gcry_strsource(err), 
