@@ -237,8 +237,12 @@ int main(int argc, char * argv[]) {
 	
 	fclose(outfh);
 	
+	free(decrypted_msg);
+	free(key);
+	free(msg->txt);
 	free(msg);
 	free(hmac);
+	free(hmac_in);
 	free(salt);
 	free(outfile_name);
 	
