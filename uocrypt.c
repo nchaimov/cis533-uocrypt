@@ -1,11 +1,23 @@
+/*
+ * uocrypt.c
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ *
+ */ 
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+	 
+// I don't care that libgcrypt itself uses deprecated functions,
+// since there's nothing I can do about it.
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <gcrypt.h>
 #pragma GCC diagnostic warning "-Wdeprecated-declarations"
+	 
 #include "uocrypt.h"
 
+// Print gcrypt errors
 void uocrypt_error(gcry_error_t err) {
 	fprintf(stderr, "error: %s: %s\n", gcry_strsource(err), 
 		gcry_strerror(err));

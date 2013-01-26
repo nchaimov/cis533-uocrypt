@@ -1,3 +1,11 @@
+/*
+ * uoio.c
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ *
+ */ 
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -6,6 +14,7 @@
 #include <sys/socket.h>
 #include "uoio.h"
 
+// Save program invocation name for use in error messages
 char * progname = NULL;
 
 // Print an error and exit
@@ -268,6 +277,7 @@ struct uoenc_network_packet * uoenc_recv_packet(int socket) {
 		
 }
 
+// Interpret a network packet, splitting it into its components
 bool uoenc_parse_packet(struct uoenc_network_packet * packet, struct uocrypt_enc_msg * msg, unsigned char * salt, unsigned char * hmac, char * filename) {
 	if(packet == NULL) {
 		uoenc_err("parse_packet 'packet' was NULL");

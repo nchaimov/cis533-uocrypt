@@ -1,5 +1,10 @@
-CFLAGS=-std=gnu99 -Wall -Wextra -g3 -I/opt/local/include 
+# Use c99 will all warnings and debug symbols enabled
+CFLAGS=-std=gnu99 -Wall -Wextra -g3 -I/opt/local/include
+
+# Use GCC by default; clang also works
 CC=gcc
+
+# Use libgcrypt
 LDFLAGS=-L/opt/local/lib -lgcrypt
 
 default: all

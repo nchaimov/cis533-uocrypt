@@ -1,3 +1,13 @@
+/*
+ * uoio.h
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ *
+ * File and network I/O functions
+ *
+ */ 
+
+
 #ifndef __UOIO_H__
 #define __UOI_H__
 
@@ -16,6 +26,9 @@
 
 extern char * progname;
 
+// These structs are packed because they will be used directly
+// for file contents and network packets, and we don't want any
+// padding.
 struct __attribute__ ((__packed__)) uoenc_file_header {
 	char identifier[4];
 	unsigned char salt[UOCRYPT_SALT_LEN];
@@ -31,6 +44,7 @@ struct __attribute__ ((__packed__)) uoenc_network_packet {
 	char body[0]; // Don't know size ahead of time
 };
 
+// Print an error and exit
 void uoenc_err(const char * err) __attribute__ ((__noreturn__));
 
 // Network functions

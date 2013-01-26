@@ -1,3 +1,13 @@
+/*
+ * uocrypt.h
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ *
+ * uocrypt encapsulates libgcrypt functions
+ *
+ */ 
+
+
 #ifndef __CRYPT_H__
 #define __CRYPT_H__
 
@@ -12,6 +22,10 @@
 #define UOCRYPT_HMAC_HASH GCRY_MD_SHA512
 
 #include <stdbool.h>
+	
+// I don't care that libgcrypt itself uses deprecated functions,
+// since there's nothing I can do about it.
+	
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <gcrypt.h>
 #pragma GCC diagnostic warning "-Wdeprecated-declarations"

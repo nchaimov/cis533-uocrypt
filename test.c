@@ -1,3 +1,14 @@
+/*
+ * test.c
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ * 
+ * This program performs sanity checks on use of libgcrypt
+ * to ensure that the uocrypt library functions are
+ * implemented correctly.
+ *
+ */ 
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>

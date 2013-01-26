@@ -1,3 +1,14 @@
+/*
+ * uoenc.c
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ *
+ * Encryption utility. Encrypts an input file, writing it either
+ * to a local file or to uodec over the network.
+ *
+ */ 
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -18,10 +29,12 @@
 #include "uocrypt.h"
 #include "uoio.h"
 
+// For error messages
 extern char * progname;
 
 int main(int argc, char * argv[]) {
 	progname = basename(argv[0]);
+	
 	bool local = false;
 	char * addr_str = NULL;
 	char * addr = NULL;
@@ -30,6 +43,8 @@ int main(int argc, char * argv[]) {
 	int sock = -1;
 	int c = -1;
 	int opt;
+	
+	// Process command line arguments.
 	while(true) {
 		static struct option long_options[] = {
 			{"local", no_argument, 0, 'l'},
@@ -53,6 +68,7 @@ int main(int argc, char * argv[]) {
 			exit(EXIT_FAILURE);
 			break;
 			
+			// Process bare arguments.
 			case '\1':
 			if(filename == NULL) {
 				filename = optarg;
@@ -137,6 +153,7 @@ int main(int argc, char * argv[]) {
 	// Calculate the HMAC
 	unsigned char * hmac = uocrypt_hmac(msg->txt, msg->txtlen, key);
 		
+	// Local file
 	if(local) {
 		// Open output file
 		FILE * outf = fopen(outfile_name, "wb");
@@ -150,6 +167,8 @@ int main(int argc, char * argv[]) {
 		}
 		fclose(outf);
 	} else {
+		// Network
+		// Resolve address
 		struct addrinfo hints;
 		struct addrinfo * addrinfo;
 		bzero(&hints, sizeof(hints));
@@ -162,12 +181,15 @@ int main(int argc, char * argv[]) {
 			uoenc_err("Unable to resolve address");
 		}
 		
+		// Open socket
 		sock = socket(addrinfo->ai_family, addrinfo->ai_socktype, 
 			addrinfo->ai_protocol);
 		if(sock == -1) {
 			perror(progname);
 			uoenc_err("Unable to open socket.");
 		}
+		
+		// Connect socket
 		status = connect(sock, addrinfo->ai_addr, addrinfo->ai_addrlen);
 		if(status == -1) {
 			close(sock);
@@ -176,6 +198,7 @@ int main(int argc, char * argv[]) {
 		}
 		freeaddrinfo(addrinfo);
 		
+		// Send encrypted message over network
 		struct uoenc_network_packet * packet = 
 			uoenc_create_packet(key, msg, hmac, filename);
 		bool send_stat = uoenc_send_packet(sock, packet);

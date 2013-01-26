@@ -1,3 +1,14 @@
+/*
+ * uodec.c
+ * Nicholas Chaimov
+ * CIS 533 Winter 2013
+ *
+ * Decryption utility. Either decrypts a local file
+ * or listens for a message from uoenc over the network.
+ *
+ */ 
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -27,6 +38,7 @@ int main(int argc, char * argv[]) {
 	int sock = -1;
 	char * port = NULL;
 	
+	// Process command line arguments
 	while(true) {
 		static struct option long_options[] = {
 			{"local", required_argument, 0, 'l'},
@@ -46,6 +58,7 @@ int main(int argc, char * argv[]) {
 			exit(EXIT_FAILURE);
 			break;
 			
+			// Process bare arguments
 			case '\1':
 			if(port == NULL) {
 				port = optarg;
@@ -223,7 +236,6 @@ int main(int argc, char * argv[]) {
 	}
 	
 	fclose(outfh);
-	
 	
 	free(msg);
 	free(hmac);
