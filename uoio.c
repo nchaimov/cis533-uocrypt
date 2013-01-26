@@ -165,12 +165,17 @@ struct uoenc_network_packet * uoenc_create_packet(struct uocrypt_key * key, stru
 	
 	
 	
+	size_t packet_len = sizeof(struct uoenc_network_packet) 
+		+ uocrypt_hmac_len() + msg->txtlen;
+	printf("create_packet packet length: %zd = (%zd + %zd + %zd)\n",
+		packet_len, sizeof(struct uoenc_network_packet),
+		uocrypt_hmac_len(), msg->txtlen);
+	
 	struct uoenc_network_packet * packet = 
-		malloc(sizeof(struct uoenc_network_packet));
+		malloc(packet_len);
 	
 	// Fill in packet and file headers
-	packet->packet_len = htonl(sizeof(struct uoenc_network_packet) 
-		+ uocrypt_hmac_len() + msg->txtlen);
+	packet->packet_len = htonl(packet_len);
 	strncpy(packet->filename, filename, FILENAME_LEN);
 	strncpy(packet->header.identifier, IDENTIFIER,
 		sizeof(packet->header.identifier));
@@ -192,13 +197,16 @@ bool uoenc_send_packet(int socket, struct uoenc_network_packet * packet) {
 		uoenc_err("send_packet 'packet' was NULL");
 	}
 	
+	char * buf = (char *) packet;
 	
 	uint32_t total_sent = 0;
-	uint32_t len = packet->packet_len;
+	uint32_t len = ntohl(packet->packet_len);
+	printf("Send packet length: %d\n", len);
 	ssize_t s;
 	
 	while(total_sent < len) {
-		s = send(socket, &(packet[total_sent]), len - total_sent, 0);
+		s = send(socket, buf + total_sent, len - total_sent, 0);
+		printf("Sent %zd bytes.\n", s);
 		if(s == -1) {
 			break; // An error occurred.
 		}
@@ -224,23 +232,31 @@ struct uoenc_network_packet * uoenc_recv_packet(int socket) {
 		perror(progname);
 		return NULL;
 	}
+	printf("While getting packet length, received %zd bytes\n", s);
 	
 	len = ntohl(len);
+	printf("Receive packet length: %zd\n", len);
 	if(len < sizeof(struct uoenc_network_packet)) {
 		uoenc_err("Packet length too short.");
 	}
 	
 	struct uoenc_network_packet * packet = malloc(len);
+	char * buf = (char *) packet;
 	total_recv += s;
 	packet->packet_len = len;
 	
 	while(total_recv < len) {
-		s = recv(socket, &(packet[total_recv]), len - total_recv, 0);
+		s = recv(socket, buf + total_recv, len - total_recv, 0);
+		printf("Received %zd bytes.\n", s);
 		if(s == -1) {
 			break; // An error occurred.
 		}
 		total_recv += s;
 	}
+		
+	printf("Total bytes: %zd.\n", total_recv);
+	printf("Packet length: %zd.\n", packet->packet_len);
+	printf("filename: %s\n", packet->filename);
 	
 	if(s == -1) {
 		perror(progname);
@@ -268,7 +284,7 @@ bool uoenc_parse_packet(struct uoenc_network_packet * packet, struct uocrypt_enc
 	if(filename == NULL) {
 		uoenc_err("parse_packet 'filename' was NULL");
 	}
-	
+		
 	// Check header identifier
 	char identifier[] = IDENTIFIER;
 	int identcmp = memcmp(packet->header.identifier, identifier,
@@ -282,6 +298,7 @@ bool uoenc_parse_packet(struct uoenc_network_packet * packet, struct uocrypt_enc
 	memcpy(msg->iv, packet->header.iv, UOCRYPT_BLOCK_LEN);
 	memcpy(hmac, packet->body, ntohl(packet->header.hmac_len));
 	msg->txtlen = ntohl(packet->header.txt_len);
+	msg->txt = malloc(msg->txtlen);
 	memcpy(msg->txt, &(packet->body[ntohl(packet->header.hmac_len)]),
 		msg->txtlen);
 	

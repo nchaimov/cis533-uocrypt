@@ -12,6 +12,9 @@
 #include <sys/mman.h>
 #include <termios.h>
 #include <limits.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include "uocrypt.h"
 #include "uoio.h"
 
@@ -21,7 +24,10 @@ int main(int argc, char * argv[]) {
 	progname = basename(argv[0]);
 	bool local = false;
 	char * addr_str = NULL;
+	char * addr = NULL;
+	char * port = NULL;
 	char * filename = NULL;
+	int sock = -1;
 	int c = -1;
 	int opt;
 	while(true) {
@@ -60,6 +66,7 @@ int main(int argc, char * argv[]) {
 		}
 	}
 		
+	// Validate command line arguments
 	if(local && addr_str) {
 		uoenc_err("can't use both -l and -d simultaneously.");
 	}
@@ -67,6 +74,20 @@ int main(int argc, char * argv[]) {
 	if((!local && !addr_str) || !filename) {
 		fprintf(stderr, "usage: %s filename [-d address] [-l]\n", progname);
 		exit(EXIT_FAILURE);
+	}
+	
+	// Validate network address
+	if(addr_str) {
+		const char * s = ":";
+		addr = strtok(addr_str, s);
+		port = strtok(NULL, s);
+		if(port == NULL) {
+			uoenc_err("No port number provided");
+		}
+		int port_num = atoi(port);
+		if(port_num < 0 || port_num > 65535) {
+			uoenc_err("Invalid port number provided");
+		}
 	}
 	
 	// Check if input file exists
@@ -89,7 +110,7 @@ int main(int argc, char * argv[]) {
 			uoenc_err("Output file already exists.");
 		}
 	}
-	
+		
 	// Open input file
 	int infd = open(filename, O_RDONLY);
 	if(infd == -1) {
@@ -129,8 +150,44 @@ int main(int argc, char * argv[]) {
 		}
 		fclose(outf);
 	} else {
-		// TODO Handle networking
+		struct addrinfo hints;
+		struct addrinfo * addrinfo;
+		bzero(&hints, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		int status = getaddrinfo(addr, port, &hints, &addrinfo);
+		if(status != 0) {
+			fprintf(stderr, "%s\n", gai_strerror(status));
+			uoenc_err("Unable to resolve address");
+		}
+		
+		sock = socket(addrinfo->ai_family, addrinfo->ai_socktype, 
+			addrinfo->ai_protocol);
+		if(sock == -1) {
+			perror(progname);
+			uoenc_err("Unable to open socket.");
+		}
+		status = connect(sock, addrinfo->ai_addr, addrinfo->ai_addrlen);
+		if(status == -1) {
+			close(sock);
+			perror(progname);
+			uoenc_err("Unable to connect socket.");
+		}
+		freeaddrinfo(addrinfo);
+		
+		struct uoenc_network_packet * packet = 
+			uoenc_create_packet(key, msg, hmac, filename);
+		bool send_stat = uoenc_send_packet(sock, packet);
+		
+		if(!send_stat) {
+			uoenc_err("Failed to send packet.");
+		}
+		
+		free(packet);
+		close(sock);
 	}
+	
 	
 	free(hmac);
 	free(key);

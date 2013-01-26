@@ -12,6 +12,9 @@
 #include <sys/mman.h>
 #include <termios.h>
 #include <limits.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include "uocrypt.h"
 #include "uoio.h"
 
@@ -21,13 +24,16 @@ int main(int argc, char * argv[]) {
 	progname = basename(argv[0]);
 	char * filename = NULL;
 	int c = -1;
+	int sock = -1;
+	char * port = NULL;
+	
 	while(true) {
 		static struct option long_options[] = {
 			{"local", required_argument, 0, 'l'},
 			{0, 0, 0, 0}
 		};
 		int i = 0;
-		c = getopt_long(argc, argv, "l:", long_options, &i);
+		c = getopt_long(argc, argv, "-l:", long_options, &i);
 		if(c == -1) {
 			break;
 		}
@@ -38,6 +44,14 @@ int main(int argc, char * argv[]) {
 			
 			case '?':
 			exit(EXIT_FAILURE);
+			break;
+			
+			case '\1':
+			if(port == NULL) {
+				port = optarg;
+			} else {
+				uoenc_err("only one port can be provided.");
+			}
 			break;
 			
 			default:
@@ -92,12 +106,81 @@ int main(int argc, char * argv[]) {
 		uoenc_read_uo_file(infh, msg, salt, hmac); 
 				
 		fclose(infh);
-		
 	} else {
-			
+		// Network
+		if(port == NULL) {
+			uoenc_err("No port number provided.");
+		}
+		
+		int port_num = atoi(port);
+		if(port_num < 0 || port_num > 65535) {
+			uoenc_err("Invalid port number");
+		}
+		
+		// Start listening
+		struct addrinfo hints;
+		struct addrinfo * addrinfo;
+		bzero(&hints, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		hints.ai_flags = AI_PASSIVE;
+		int status = getaddrinfo(NULL, port, &hints, &addrinfo);
+		if(status != 0) {
+			fprintf(stderr, "%s\n", gai_strerror(status));
+			uoenc_err("Could not resolve address.");
+		}
+		sock = socket(addrinfo->ai_family, addrinfo->ai_socktype,
+			addrinfo->ai_protocol);
+		if(sock == -1) {
+			perror(progname);
+			uoenc_err("Unable to open socket.");
+		}
+		status = bind(sock, addrinfo->ai_addr, addrinfo->ai_addrlen);
+		if(status == -1) {
+			close(sock);
+			perror(progname);
+			uoenc_err("Unable to bind socket.");
+		}
+		freeaddrinfo(addrinfo);
+		status = listen(sock, 1);
+		if(status == -1) {
+			perror(progname);
+			uoenc_err("Unable to listen on socket.");
+		}
+		
+		// Accept incoming connections
+		struct sockaddr_storage sockaddr;
+		socklen_t sockaddr_len = sizeof(struct sockaddr_storage); 
+		int insock = accept(sock, (struct sockaddr *)&sockaddr, &sockaddr_len);
+		if(insock == -1) {
+			perror(progname);
+			uoenc_err("Unable to accept incoming connection.");
+		}
+		
+		// Receive incoming data
+		struct uoenc_network_packet * packet = uoenc_recv_packet(insock);
+		if(packet == NULL) {
+			uoenc_err("Unable to receive packet.");
+		}
+		
+		// Parse incoming data
+		outfile_name = malloc(FILENAME_LEN);
+		bool parse_stat = uoenc_parse_packet(packet, msg, salt, hmac,
+			outfile_name);
+		if(!parse_stat) {
+			uoenc_err("Unable to parse packet.");
+		}
+		
+		printf("Incoming file: %s\n", packet->filename);
+		
+		close(insock);
+		close(sock);
+		
 	}
 	
-	if(outfile_name == NULL) {
+	// Validate output filename
+	if(outfile_name == NULL || strnlen(outfile_name, FILENAME_LEN) == 0) {
 		uoenc_err("Invalid output filename");
 	}
 		
